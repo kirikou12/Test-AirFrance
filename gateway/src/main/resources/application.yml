@@ -1,0 +1,53 @@
+server:
+  port: 9191
+
+spring:
+  application:
+    name: API-GATEWAY
+  cloud:
+    gateway:
+      routes:
+        - id: USER-DISPLAY-SERVICE
+          uri: lb://USER-DISPLAY-SERVICE
+          predicates:
+            - Path=/user-api/v1.0/display/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: USER-DISPLAY-SERVICE
+                fallbackuri: forward:/userDisplayFallback
+        - id: USER-DISPLAY-SERVICE
+          uri: lb://USER-REGISTER-SERVICE
+          predicates:
+            - Path=/user-api/v1.0/register/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: USER-REGISTER-SERVICE
+                fallbackuri: forward:/userRegisterFallBack
+
+hystrix:
+  command:
+    fallbackcmd:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 4000
+
+management:
+  endpoint:
+  endpoints:
+    web:
+      exposure:
+        include: hystrix.com
+
+
+eureka:
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    hostname: localhost
+
